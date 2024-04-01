@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  save_and_store_service:
+    build:
+      context: ./processing_file  # Directory containing the first Dockerfile
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - database
+
+  django_app:
+    build:
+      context: ./restapi_app  # Directory containing the second Dockerfile
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      - database
+    environment:
+      - DB_HOST=database
+
+  database:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=temperatures_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456789
