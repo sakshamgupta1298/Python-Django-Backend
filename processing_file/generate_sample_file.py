@@ -1,3 +1,6 @@
+# This is for generating sample_data.txt file.
+# This is for testing purpose.
+
 import random
 from datetime import datetime,timedelta
 

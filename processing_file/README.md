@@ -18,8 +18,8 @@ Before running the script, make sure you have the following installed on your ma
 1. Clone the repository to your local machine:
 
     ```bash
-    git clone https://github.com/yourusername/save-and-store-temperature-readings.git
-    cd save-and-store-temperature-readings
+    git clone https://github.com/sakshamgupta1298/Python-Django-Backend.git
+    cd processing_file
     ```
 
 2. Build the Docker image:
@@ -49,6 +49,7 @@ Before running the script, make sure you have the following installed on your ma
     ```
 
     Replace `your_data_file.txt` with the path to your input file containing temperature readings.
+    I have also added script to generate a sample data input file , you can use `generate_sample_file.py`. Also you can directly use `sample_data.txt`.
 
 3. The script will read the file, process the data, and store it in the PostgreSQL database.
 

@@ -1,3 +1,6 @@
+# This file is intended to store hardcoded temperature readings into a PostgreSQL database.
+# This is for testing the database connection.
+
 import psycopg2
 
 # Define a class to represent the composite key (city_id, timestamp) along with temperature
