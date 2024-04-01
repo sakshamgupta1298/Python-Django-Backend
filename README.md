@@ -14,9 +14,13 @@ Ensure that you have Docker and Docker-compose installed on your machine.
 
 ## Usage
 
-1. Clone the repository containing your Docker-compose file to your local machine.
+1. Clone the repository to your local machine:
 
-2. Navigate to the directory containing the Docker-compose file.
+    ```bash
+    git clone https://github.com/sakshamgupta1298/Python-Django-Backend.git
+    ```
+
+2. Navigate to the directory that you have cloned - that have docker-compose.yml.
 
 3. Run the following command to start the services:
 
