@@ -19,7 +19,7 @@ def save_to_database(queue):
         dbname="temperatures_db",
         user="postgres",
         password="123456789",
-        host="localhost",  # Use this special DNS name to refer to the host machine
+        host="host.docker.internal",  # Use this special DNS name to refer to the host machine
         port="5432"
     )
     cursor = conn.cursor()
