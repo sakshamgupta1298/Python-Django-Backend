@@ -85,6 +85,10 @@ To access protected endpoints, you need to authenticate using JWT (JSON Web Toke
 To access protected endpoints, include the JWT access token in the request headers .
 When using Postman, navigate to the Authorization section and choose "Bearer Token" as the authentication type. Paste your access token into the provided Token input box. Afterward, send the request.
 
+#### Caching of the GET REST Endpoint
+For caching, I have used the in-built Django caching backemd that caches the result of the GET REST Endpoint in PostgresSQL database `cache_table`. Caching Strategy used is: Per-Site Cache Strategy because the temperature statistics returned by above endpoint is not user-specific.
+API Response Performance improvement: 151 ms to 76 ms.
+
 ## Built With
 
 - Django - The web framework used
