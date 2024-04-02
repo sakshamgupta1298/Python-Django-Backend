@@ -2,6 +2,7 @@ import multiprocessing
 import psycopg2
 from psycopg2 import sql
 import argparse
+import time
 
 # Function to process the file and put data into the queue
 def process_file_and_queue(file_path, queue,num_processes):
@@ -32,9 +33,16 @@ def save_to_database(queue):
             break
         city_id, temperature, timestamp = data.split(',')
         query = sql.SQL("INSERT INTO temperatures_db.public.temperature (city_id, temperature, timestamp) VALUES (%s, %s, %s)")
-        cursor.execute(query, (city_id, temperature, timestamp))
-    
-    conn.commit()
+        try:
+            cursor.execute(query, (city_id, temperature, timestamp))
+            conn.commit()
+        except psycopg2.Error as e:
+            print("Error occurred:", e)
+            print("Retrying in 5 seconds...")
+            time.sleep(5)
+            
+            
+
     cursor.close()
     conn.close()
 
