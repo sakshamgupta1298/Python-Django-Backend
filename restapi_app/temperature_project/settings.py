@@ -145,3 +145,6 @@ CACHES = {
         'LOCATION': 'cache_table',
     }
 }
+
+CELERY_BROKER_URL = 'redis://host.docker.internal:6379/0'
+CELERY_RESULT_BACKEND = 'db+postgresql://postgres:123456789@host.docker.internal:5432/temperatures_db'

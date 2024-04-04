@@ -1,6 +1,10 @@
 from django.urls import path
-from . import views
+from .views import TemperatureStatsView
+from .views import UploadTemperatureFile
+
 
 urlpatterns = [
-    path('temperature-readings/<int:city_id>/', views.TemperatureStatsView.as_view(), name='temperature-readings'),
+    path('temperature-readings/<int:city_id>/', TemperatureStatsView.as_view(), name='temperature-readings'),
+    path('upload/', UploadTemperatureFile.as_view(), name='upload_temperature_file'),
+
 ]

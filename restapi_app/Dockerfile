@@ -1,24 +1,25 @@
-# Use the official Python image as a base image
-FROM python:3.10-slim
+# Use an official Python runtime as a parent image
+FROM python:3.10
 
-
-# Set environment variables for Python
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file and install dependencies
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy the current directory contents into the container at /app
+COPY . /app
 
-# Copy the Django project code into the container
-COPY . /app/
+# Install dependencies
+# RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-# Expose port 8000 to allow communication to/from the Docker container
+# Expose port 8000 to allow communication to/from server
 EXPOSE 8000
 
-# Command to run the 
+# Install Redis server
+RUN apt-get update && apt-get install -y redis-server
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Run Redis server
+CMD redis-server & celery -A temperature_project worker --pool=solo -l info & python manage.py runserver 0.0.0.0:8000
