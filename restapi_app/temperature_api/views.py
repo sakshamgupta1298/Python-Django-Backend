@@ -1,4 +1,3 @@
-from django.http import JsonResponse
 from django.db import connection
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -61,8 +60,6 @@ class UploadTemperatureFile(APIView):
         
         # Read file content and pass data to Celery task
         file_data = file.read().decode('utf-8')
-        print(file_data)
-        print("going to celery")
         save_to_database.delay(file_data)  # Passing file data to Celery task
         
         return Response("File upload request accepted", status=status.HTTP_202_ACCEPTED)
