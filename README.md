@@ -40,11 +40,13 @@ Ensure that you have Docker and Docker-compose installed on your machine.
 
 This service hosts a Django application designed to monitor temperature readings for various cities. Access to the application is provided through port 8000. Currently, superuser credentials can be utilized for both authentication and authorization purposes.
 
-One of the key features of this application is the "Upload Temperature File" functionality. This feature enables users to upload temperature data files, which are then processed asynchronously using Celery tasks. The processed data is subsequently stored in the database.
+One of the key features of this application is the "Upload Temperature File" functionality. This feature enables users to upload temperature data files, Upon receiving a file, the application uploads it to MinIO and passes the file's URL as an argument to a Celery task ,which are then processed asynchronously using Celery tasks. The processed data is subsequently , During file processing , the file is downloaded into a temporary folder, its data is read in chunks, and each chunk is processed to stored in the database.
 
 For further details and instructions, please consult the README File located in the ./restapi_app directory.
 
 Additionally, a Per-Site Cache Strategy has been implemented. This strategy is employed because the temperature statistics returned by the application endpoint are not specific to individual users.
+
+
 
 ### database
 

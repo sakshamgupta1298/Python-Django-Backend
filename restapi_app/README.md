@@ -13,6 +13,7 @@ Make sure you have the following software installed on your machine:
 - Docker
 - Python 3.10
 - Celery and Redis
+- MinIO
 
 ### Installing
 
@@ -94,15 +95,25 @@ Methods: GET, POST
 For caching, I have used the in-built Django caching backemd that caches the result of the GET REST Endpoint in PostgresSQL database `cache_table`. Caching Strategy used is: Per-Site Cache Strategy because the temperature statistics returned by above endpoint is not user-specific.
 API Response Performance improvement: 151 ms to 76 ms.
 
-#### Celery for processing the Uploaded file
-I have used celery which is responsible for managing background tasks, including the processing of uploaded temperature data files. This separation of tasks from the main web server process enhances scalability and performance. Additionally, used Redis serves as the message broker for Celery, facilitating communication between the Django application and Celery workers through a rapid and effective message queuing system.
+#### Minio and Celery for processing the Uploaded file
+I have utilized Celery to handle background tasks, including the processing of uploaded temperature data files, in conjunction with MinIO for object storage. This separation of tasks from the main web server process enhances scalability and performance. Redis acts as the message broker for Celery, facilitating communication between the Django application and Celery workers through a fast and efficient message queuing system.
+
+Here's how the file processing workflow works:
+
+1. When a file is received, it is uploaded to MinIO, and the URL of the uploaded file is passed as an argument to a Celery task.
+
+2. When processing the file, the following steps are performed:
+   - The file is downloaded to a temporary folder.
+   - The file data is read in chunks.
+   - Each chunk is processed as required.
 
 ## Built With
 
 - Django - The web framework used
 - PostgreSQL - Database for storing temperature readings
 - Docker - Containerization for portability and easy deployment
-- Celery - Distributed task queue for asynchronous processing
+- Celery - Distributed task queue for asynchronous 
+- Minio - It is used for object storage
 
 ## Authors
 - Saksham Gupta

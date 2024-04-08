@@ -148,3 +148,11 @@ CACHES = {
 
 CELERY_BROKER_URL = 'redis://host.docker.internal:6379/0'
 CELERY_RESULT_BACKEND = 'db+postgresql://postgres:123456789@host.docker.internal:5432/temperatures_db'
+
+# Define MINIO settings
+MINIO_HOST = 'play.min.io:9443'  # Replace 'your-minio-host' with the actual hostname or IP address
+MINIO_ACCESS_KEY = 'Q3AM3UQ867SPQQA43P2F'  # Replace 'your-access-key' with the actual access key
+MINIO_SECRET_KEY = 'zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG'  # Replace 'your-secret-key' with the actual secret key
+
+# Optionally, you can define additional settings such as the bucket name
+MINIO_BUCKET_NAME = 'sakshamupload' 

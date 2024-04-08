@@ -2,11 +2,14 @@ version: '3.8'
 
 services:
   web:
-    build: ./restapi_app  
+    build: 
+      context: ./restapi_app
     ports:
       - "8000:8000"
     depends_on:
       - redis
+      - minio
+      - database
     environment:
       - DB_HOST=database
 
@@ -19,3 +22,18 @@ services:
 
   redis:
     image: redis:latest
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER : admin_user
+      MINIO_ROOT_PASSWORD : admin_pass
+    command: server --console-address ":9001" /data
+    volumes:
+      - minio_data:/data
+
+volumes:
+  minio_data:

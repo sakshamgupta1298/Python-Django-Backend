@@ -4,48 +4,76 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.core.paginator import Paginator
 from rest_framework import status
+# from .tasks import save_to_database 
+from django.shortcuts import render
+from django.conf import settings
+from django.core.files.storage import default_storage
+from minio import Minio
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from .tasks import save_to_database 
 from django.shortcuts import render
+from minio.error import InvalidResponseError
+import tempfile 
+import os
 
 class TemperatureStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, city_id):
-        # Get page number from query parameters, default to 1 if not provided
-        page_number = request.query_params.get('page', 1)
+        # Define the page size
+        page_size = 10000  
 
-        # Execute the SQL query with pagination
+        # Fetch all temperatures for the specified city with pagination
         with connection.cursor() as cursor:
+            # Fetch total count of temperatures for the specified city
             cursor.execute("""
-                SELECT temperature FROM temperature WHERE city_id = %s
+                SELECT COUNT(*) FROM temperature 
+                WHERE city_id = %s
             """, [city_id])
-            rows = cursor.fetchall()
+            total_count = cursor.fetchone()[0]
 
-        # Convert the result to a list of temperatures
-        temperatures = [row[0] for row in rows]
+            # Calculate total pages
+            total_pages = total_count // page_size + (1 if total_count % page_size > 0 else 0)
 
-        # Paginate the temperatures
-        paginator = Paginator(temperatures, 10)  # Assuming 10 items per page
-        page_obj = paginator.get_page(page_number)
+            # Initialize variables to store aggregate values
+            min_temp = None
+            max_temp = None
+            sum_temp = 0
 
-        if page_obj.object_list:
-            mean_temp = sum(page_obj.object_list) / len(page_obj.object_list)
-            max_temp = max(page_obj.object_list)
-            min_temp = min(page_obj.object_list)
+            # Fetch temperatures for each page
+            for page_number in range(1, total_pages + 1):
+                cursor.execute("""
+                    SELECT MAX(temperature), MIN(temperature), SUM(temperature) FROM temperature 
+                    WHERE city_id = %s
+                    LIMIT %s OFFSET %s
+                """, [city_id, page_size, page_size * (page_number - 1)])
+                row = cursor.fetchone()
+
+                # Update min and max temperatures
+                if row:
+                    max_temp_page, min_temp_page, sum_temp_page = row
+                    if min_temp is None or min_temp_page < min_temp:
+                        min_temp = min_temp_page
+                    if max_temp is None or max_temp_page > max_temp:
+                        max_temp = max_temp_page
+                    sum_temp += sum_temp_page
+
+            # Calculate average temperature
+            average_temp = sum_temp / total_count if total_count > 0 else 0
+
+            # Prepare response data
             response_data = {
-                'mean': mean_temp,
-                'max': max_temp,
-                'min': min_temp,
-                'page_info': {
-                    'page_number': page_obj.number,
-                    'has_next': page_obj.has_next(),
-                    'has_previous': page_obj.has_previous(),
-                    'total_pages': paginator.num_pages
-                }
+                'min_temp': min_temp,
+                'max_temp': max_temp,
+                'mean_temp': average_temp,
+                'total_pages': total_pages
             }
+
             return Response(response_data)
-        else:
-            return Response({'message': 'No temperature readings found for the specified city.'}, status=404)
+
+
 
 
 class UploadTemperatureFile(APIView):
@@ -56,10 +84,41 @@ class UploadTemperatureFile(APIView):
     def post(self, request, format=None):
         file = request.FILES.get('file')
         if not file:
-            return Response("No file provided", status=status.HTTP_400_BAD_REQUEST)
+            return Response("No file provided by the user", status=status.HTTP_400_BAD_REQUEST)
         
-        # Read file content and pass data to Celery task
-        file_data = file.read().decode('utf-8')
-        save_to_database.delay(file_data)  # Passing file data to Celery task
+        # Initialize MinIO client
+        minio_client = Minio(
+                endpoint='play.min.io',
+                access_key=settings.MINIO_ACCESS_KEY,
+                secret_key=settings.MINIO_SECRET_KEY,
+                secure=True
+            )
+
+        # Construct the object name (key) for the file in MinIO
+        object_name = file.name
         
-        return Response("File upload request accepted", status=status.HTTP_202_ACCEPTED)
+        # Save the file to a temporary location on the server
+        temp_file_path = os.path.join(tempfile.gettempdir(), object_name)
+        with open(temp_file_path, 'wb') as temp_file:
+            for chunk in file.chunks():
+                temp_file.write(chunk)
+
+        # Upload the file to MinIO
+        file_content_type = file.content_type
+        try:
+            minio_client.fput_object(
+                bucket_name=settings.MINIO_BUCKET_NAME,
+                object_name=object_name,
+                file_path=temp_file_path,
+                content_type=file_content_type
+            )
+            
+            # Generate the URL for the uploaded file
+            presigned_url = minio_client.presigned_get_object(
+                bucket_name=settings.MINIO_BUCKET_NAME,
+                object_name=object_name,
+            )
+            save_to_database.delay(presigned_url)
+            return Response({"file_url": presigned_url}, status=status.HTTP_201_CREATED)
+        except InvalidResponseError as e:
+            return Response(f"Failed to upload file to MinIO: {e}", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
